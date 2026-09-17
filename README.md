@@ -22,7 +22,7 @@
 
     Design the instruction (ISA opcodes) fields and width to meet your protocol bit-banging needs first, then pick an instruction word size (like 16-bit or 32-bit)
 
-### Sept 14 2026 (Monday) 
+### Sept 17 2026 (Thursday) 
 
     RP2040's PIO was really cool
     Came across https://github.com/raspberrypi/pico-examples/tree/master/pio
