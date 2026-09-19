@@ -42,3 +42,60 @@
         Formal	SymbiYosys + SVA (FIFOs, pin-mux one-hot, decoder, no-X on outputs)
 
     Our true starting point is https://github.com/TinyTapeout/ttihp-verilog-template
+
+
+### Sept 19 2026 (Saturday) 
+
+    We came to an understanding that, we need to fix a protocol between the host and our emulator, mostly going to be a JTAG(USB)
+    
+    We are assuming that the host knows what protocol the devices work on beforehand, unless there is a protocol sensing logic?
+    
+    Flow : Host <-> our emulator <-> different devices using different protocols (R/W both)
+    
+    We realize it is a SISO/SIMO setup
+    
+    we produced a CDC study tree for clock domains, that we may face : 
+    
+    slow to fast, single bit, comb to comb 
+    slow to fast, single bit, comb to seq
+    slow to fast, single bit, seq to seq 
+    slow to fast, single bit, seq to comb
+    
+    slow to fast, multi bit, comb to comb 
+    slow to fast, multi bit, comb to seq
+    slow to fast, multi bit, seq to seq 
+    slow to fast, multi bit, seq to comb
+    
+    slow to fast, single bit, comb to comb 
+    slow to fast, single bit, comb to seq
+    slow to fast, single bit, seq to seq 
+    slow to fast, single bit, seq to comb
+    
+    fast to slow, multi bit, comb to comb 
+    fast to slow, multi bit, comb to seq
+    fast to slow, multi bit, seq to seq 
+    fast to slow, multi bit, seq to comb
+    
+    fast to slow, single bit, comb to comb 
+    fast to slow, single bit, comb to seq
+    fast to slow, single bit, seq to seq 
+    fast to slow, single bit, seq to comb
+    
+    slow to fast, multi bit, comb to comb 
+    slow to fast, multi bit, comb to seq
+    slow to fast, multi bit, seq to seq 
+    slow to fast, multi bit, seq to comb
+    
+    We need to fix our ISA width to decide SRAM Macro usage
+    
+    We need to look into the FSM implementation 
+    
+    We think we need an ISA for initial handshake for programming our emulator
+    
+    A bare idea we made up is as follows:
+    
+    Host initiates the emulator with the ISA and then sends an INT, which our IRQ acks and initiates the protocol it needs and relays back the device's packets through the USB? (we are not sure how to streamline the data flow)
+
+
+
+
