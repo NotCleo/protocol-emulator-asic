@@ -25,10 +25,10 @@ tt_um_protocol_emulator
     └── pe_io
 ```
 
-The active execution-side memory is `pe_imem`; `program_mem.sv` remains an
-inert future management-facing boundary. The active FIFOs are
-`engine/pe_fifo.sv`; top-level `tx_fifo.sv` and `rx_fifo.sv` are future
-management boundaries. This is documented in `docs/asic_architecture.md`.
+The active execution-side memory is `pe_imem`, and the active FIFO pair is
+`engine/pe_fifo.sv`. The former duplicate top-level storage placeholders were
+removed after management integration. This is documented in
+`docs/asic_architecture.md`.
 
 ## Tools
 

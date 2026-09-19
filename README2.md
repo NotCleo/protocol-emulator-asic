@@ -60,7 +60,7 @@ Public-pin management SPI test:
 verilator --binary --timing --Wno-fatal --top-module tb_mgmt_spi
   --Mdir sim/mgmt_obj_dir tests/tb_mgmt_spi.sv src/project.v
   src/cfg_spi_slave.sv src/host_cmd_if.sv src/management_decode.sv
-  src/csr_block.sv src/program_mem.sv src/tx_fifo.sv src/rx_fifo.sv
+  src/csr_block.sv
   src/engine/*.sv
 ./sim/mgmt_obj_dir/Vtb_mgmt_spi
 ~~~

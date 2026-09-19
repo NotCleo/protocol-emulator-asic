@@ -8,7 +8,6 @@ TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = project.v \
   cfg_spi_slave.sv host_cmd_if.sv management_decode.sv csr_block.sv \
-  program_mem.sv tx_fifo.sv rx_fifo.sv \
   engine/protocol_emulator_top.sv engine/pe_host_if.sv engine/pe_imem.sv \
   engine/pe_clkdiv.sv engine/pe_core.sv engine/pe_decoder.sv engine/pe_io.sv \
   engine/pe_fifo.sv engine/pe_sync.sv
