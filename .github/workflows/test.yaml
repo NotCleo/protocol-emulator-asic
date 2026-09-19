@@ -27,15 +27,15 @@ jobs:
         run: |
           cd test
           make clean
-          make
-          # make will return success even if the test fails, so check for failure in the results.xml
+          make SIM=icarus
+          # Check the JUnit report after the simulator run completes.
           ! grep failure results.xml
 
       - name: Test Summary
         uses: test-summary/action@v2.4
+        if: always() && hashFiles('test/results.xml') != ''
         with:
           paths: "test/results.xml"
-        if: always()
 
       - name: upload waveform and test results
         if: success() || failure()
