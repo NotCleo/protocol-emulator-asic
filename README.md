@@ -1,42 +1,24 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+# Protocol Emulator ASIC
 
-# Tiny Tapeout Verilog Project Template
+Tiny Tapeout IHP CMOS5L implementation of the Jane Street programmable protocol-emulator ASIC concept. The project targets a 6x4 tile allocation and keeps the eight `uio` pins exclusively for protocol GPIO.
 
-- [Read the documentation for project](docs/info.md)
+## Fixed top-level mapping
 
-## What is Tiny Tapeout?
+- `ui_in[0]`: CFG_MOSI
+- `ui_in[1]`: CFG_SCLK
+- `ui_in[2]`: CFG_CS_N
+- `uo_out[0]`: CFG_MISO
+- `uio_in/out/oe[7:0]`: programmable protocol GPIO
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+The management SPI transport is sampled into the main clk domain (Mode 0, MSB-first, initially at or below 5 MHz). It carries generic register and burst transactions to the same internal management target used by RTL verification; the old host-style interface remains internal and is not exposed as chip pins.
 
-To learn more and get started, visit https://tinytapeout.com.
+## Verification
 
-## Set up your Verilog project
+From the repository root:
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+```text
+python3 tests/run_tests.py
+python3 tests/generate_golden.py
+```
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
-
-## Enable GitHub actions to build the results page
-
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
-
-## Resources
-
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
-
-## What next?
-
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+The existing Milestone 1 engine can be linted with Verilator using the source list in `info.yaml`. The official Cocotb test requires the template's Python dependencies.

@@ -11,3 +11,11 @@ test/sim_build
 test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
+
+# Local simulation/build artifacts
+sim/
+test/sim_build/
+.venv/
+tests/__pycache__/
+tests/generated_random/
+tools/__pycache__/
