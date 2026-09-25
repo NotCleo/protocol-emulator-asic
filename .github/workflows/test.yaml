@@ -14,8 +14,13 @@ jobs:
         run: |
           # cocotb 2.x requires Verilator >= 5.036; ubuntu-24.04 apt ships an
           # older version, so use the YosysHQ OSS CAD Suite build instead.
-          wget -q https://github.com/YosysHQ/oss-cad-suite-build/releases/latest/download/oss-cad-suite-linux-x64.tgz
-          tar -xzf oss-cad-suite-linux-x64.tgz -C "${{ github.workspace }}"
+          # Release assets are date-stamped, so resolve the URL via the API.
+          URL=$(curl -sfL https://api.github.com/repos/YosysHQ/oss-cad-suite-build/releases/latest \
+            | grep -oE '"browser_download_url": *"[^"]*oss-cad-suite-linux-x64-[0-9]{8}\.tgz"' \
+            | head -1 | cut -d'"' -f4)
+          test -n "$URL"
+          wget -q "$URL" -O oss-cad-suite.tgz
+          tar -xzf oss-cad-suite.tgz -C "${{ github.workspace }}"
           echo "${{ github.workspace }}/oss-cad-suite/bin" >> "$GITHUB_PATH"
 
       # Set Python up and install cocotb
