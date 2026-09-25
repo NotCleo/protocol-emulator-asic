@@ -2,14 +2,22 @@
 # See https://docs.cocotb.org/en/stable/quickstart.html for more info
 
 # defaults
-# The tt-gds-action gl_test job only installs Icarus Verilog and invokes
-# `GATES=yes make`, so gate-level runs must default to icarus.  RTL runs keep
-# verilator (fastest simulator locally and in the test workflow).  An explicit
-# `make SIM=...` always wins.
+# The tt-gds-action gl_test job only installs Icarus Verilog, and its step
+# runs `make clean` (with NO GATES set) before `GATES=yes make`, under
+# `bash -e`.  cocotb's Makefile.verilator hard-errors at parse time when
+# verilator is missing, so *every* invocation on that runner must resolve
+# SIM away from verilator:
+# - GATES=yes -> icarus (gate-level runs)
+# - otherwise -> verilator when it is on PATH (fast local/RTL default),
+#   falling back to icarus so bare invocations like `make clean` still
+#   parse on iverilog-only machines (Makefile.icarus has no parse-time
+#   tool check).
+# An explicit `make SIM=...` (used by the test workflow) always wins.
+SIM_DETECTED := $(shell command -v verilator >/dev/null 2>&1 && echo verilator || echo icarus)
 ifeq ($(GATES),yes)
 SIM ?= icarus
 else
-SIM ?= verilator
+SIM ?= $(SIM_DETECTED)
 endif
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
