@@ -14,7 +14,6 @@ module pe_imem #(
     localparam int PC_W = $clog2(IMEM_DEPTH);
     localparam int HOST_W = $clog2(IMEM_DEPTH/2);
     logic [15:0] imem [0:IMEM_DEPTH-1];
-    integer i;
 
     always_comb begin
         instr_o = imem[pc_i];
@@ -25,7 +24,7 @@ module pe_imem #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-            for (i = 0; i < IMEM_DEPTH; i = i + 1)
+            for (int i = 0; i < IMEM_DEPTH; i = i + 1)
                 imem[i] <= 16'b0;
         end else if (host_we_i) begin
             if (host_wstrb_i[0]) imem[{host_word_addr_i, 1'b0}][7:0] <= host_wdata_i[7:0];

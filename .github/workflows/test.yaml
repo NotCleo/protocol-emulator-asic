@@ -9,9 +9,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install iverilog
+      - name: Install Verilator (OSS CAD Suite)
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y iverilog
+        run: |
+          # cocotb 2.x requires Verilator >= 5.036; ubuntu-24.04 apt ships an
+          # older version, so use the YosysHQ OSS CAD Suite build instead.
+          wget -q https://github.com/YosysHQ/oss-cad-suite-build/releases/latest/download/oss-cad-suite-linux-x64.tgz
+          tar -xzf oss-cad-suite-linux-x64.tgz -C "${{ github.workspace }}"
+          echo "${{ github.workspace }}/oss-cad-suite/bin" >> "$GITHUB_PATH"
 
       # Set Python up and install cocotb
       - name: Setup python
@@ -26,8 +31,8 @@ jobs:
       - name: Run tests
         run: |
           cd test
-          make clean
-          make SIM=icarus
+          make clean SIM=verilator
+          make SIM=verilator
           # Check the JUnit report after the simulator run completes.
           ! grep failure results.xml
 

@@ -19,7 +19,6 @@ module pe_fifo #(
     logic [PTR_W-1:0] rd_ptr_q;
     logic [PTR_W-1:0] wr_ptr_q;
     logic [LEVEL_W-1:0] level_q;
-    integer i;
 
     assign empty_o = (level_q == 0);
     assign full_o = (level_q == DEPTH);
@@ -27,11 +26,17 @@ module pe_fifo #(
     assign pop_data_o = mem[rd_ptr_q];
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni || soft_reset_i) begin
+        if (!rst_ni) begin
             rd_ptr_q <= '0;
             wr_ptr_q <= '0;
             level_q <= '0;
-            for (i = 0; i < DEPTH; i = i + 1) mem[i] <= '0;
+            for (int i = 0; i < DEPTH; i = i + 1) mem[i] <= '0;
+        end else if (soft_reset_i) begin
+            // synchronous soft reset: same state clear, sampled on clk
+            rd_ptr_q <= '0;
+            wr_ptr_q <= '0;
+            level_q <= '0;
+            for (int i = 0; i < DEPTH; i = i + 1) mem[i] <= '0;
         end else begin
             if (push_i && (!full_o || (pop_i && !empty_o))) begin
                 mem[wr_ptr_q] <= push_data_i;

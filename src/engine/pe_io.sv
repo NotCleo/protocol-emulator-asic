@@ -44,7 +44,8 @@ module pe_io #(
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni || soft_reset_i) begin gpio_out_o <= '0; gpio_oe_o <= '0; end
+        if (!rst_ni) begin gpio_out_o <= '0; gpio_oe_o <= '0; end
+        else if (soft_reset_i) begin gpio_out_o <= '0; gpio_oe_o <= '0; end
         else begin gpio_out_o <= gpio_out_next; gpio_oe_o <= gpio_oe_next; end
     end
 endmodule
