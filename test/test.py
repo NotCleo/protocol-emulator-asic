@@ -8,7 +8,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import (
     ClockCycles,
-    Edge,
     RisingEdge,
     Timer,
     with_timeout,
@@ -174,12 +173,30 @@ def assemble_text(source):
     return Assembler().assemble(source)
 
 
-async def run_gpio_capture(dut):
-    await RisingEdge(dut.uio_oe[GPIO_BIT])
-    previous = int(dut.uio_out.value) & 1
+async def _wait_oe_high(dut):
+    """Wait until uio_oe[GPIO_BIT] reads 1, sampled on system clock edges.
+
+    Icarus VPI (gate-level runs) cannot register value-change callbacks on
+    bit-selects of vector signals ("cannot callback values on type code=37"),
+    so the capture coroutines poll whole vectors one nanosecond after each
+    clk edge instead of awaiting bit edges.  The fixed +1 ns offset keeps
+    event timestamps on the exact clock grid the interval assertions rely
+    on, and behaves identically under Verilator (RTL) and Icarus (GL).
+    """
+    while True:
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+        oe = dut.uio_oe.value
+        if oe.is_resolvable and (int(oe) >> GPIO_BIT) & 1:
+            return
+
+
+async def _poll_gpio_events(dut):
+    previous = (int(dut.uio_out.value) >> GPIO_BIT) & 1
     events = []
     while len(events) < 8:
-        await with_timeout(Edge(dut.uio_out[GPIO_BIT]), 5, "us")
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
         value = (int(dut.uio_out.value) >> GPIO_BIT) & 1
         if value != previous:
             events.append((get_sim_time("ns"), value))
@@ -187,8 +204,13 @@ async def run_gpio_capture(dut):
     return events
 
 
+async def run_gpio_capture(dut):
+    await _wait_oe_high(dut)
+    return await with_timeout(_poll_gpio_events(dut), 5, "us")
+
+
 async def capture_uart_frame(dut):
-    await RisingEdge(dut.uio_oe[GPIO_BIT])
+    await _wait_oe_high(dut)
     # SET PINDIRS executes one engine tick before the start-bit SET.
     await Timer(60, unit="ns")
     samples = []

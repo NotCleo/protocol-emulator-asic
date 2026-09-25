@@ -44,4 +44,8 @@ jobs:
       pages: write # to deploy to Pages
       id-token: write # to verify the deployment originates from an appropriate source
     steps:
+      # Non-blocking: the Pages deploy fails unless GitHub Pages is enabled on
+      # this repo (Settings -> Pages -> Source: GitHub Actions).  The GDS
+      # viewer is a convenience only; it must not turn the gds workflow red.
       - uses: TinyTapeout/tt-gds-action/viewer@ttihp26b
+        continue-on-error: true

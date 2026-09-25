@@ -1,0 +1,9 @@
+# cycle engine_tick pc instruction x y osr isr gpio_in gpio_out gpio_oe tx_level rx_level fifo_activity wait_state delay_count sideset_state running fault stall_reason
+0001 0001 01 8800 0000 0000 ffffffff 00000000 00 00 00 0 0 pull 0 00 00 1 0 -
+0002 0002 02 a180 0000 0000 ffffffff 00000000 00 ff 00 0 0 - 0 00 00 1 0 -
+0003 0003 03 e3e0 0000 0000 ffffffff 00000000 00 ff 00 0 0 - 0 00 00 1 0 -
+0004 0004 04 6020 0000 0000 7fffffff 00000000 00 ff 00 0 0 - 0 00 00 1 0 -
+0005 0005 00 0000 0000 0000 7fffffff 00000000 00 ff 00 0 0 - 0 00 00 1 0 -
+0006 0006 00 8800 0000 0000 7fffffff 00000000 00 ff 00 0 0 pull_block 0 00 00 1 0 pull_block
+0007 0007 00 8800 0000 0000 7fffffff 00000000 00 ff 00 0 0 pull_block 0 00 00 1 0 pull_block
+0008 0008 00 8800 0000 0000 7fffffff 00000000 00 ff 00 0 0 pull_block 0 00 00 1 0 pull_block

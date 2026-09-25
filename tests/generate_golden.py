@@ -11,12 +11,15 @@ from tools.assembler import Assembler
 HEADER = "# cycle engine_tick pc instruction x y osr isr gpio_in gpio_out gpio_oe tx_level rx_level fifo_activity wait_state delay_count sideset_state running fault stall_reason"
 
 def write_trace(name: str, source: str, cycles: int, *, sideset_count: int = 0,
-                sideset_base: int = 0, initial_x: int = 0, initial_y: int = 0) -> None:
+                sideset_base: int = 0, initial_x: int = 0, initial_y: int = 0,
+                initial_tx=None) -> None:
     engine = ProtocolEngine()
     engine.sideset_count = sideset_count
     engine.sideset_base = sideset_base
     engine.x = initial_x
     engine.y = initial_y
+    if initial_tx:
+        engine.feed_tx(initial_tx)
     engine.load_program(Assembler().assemble(source))
     engine.start()
     lines = [HEADER]
@@ -38,3 +41,7 @@ write_trace("delay_test", "set pins, 1 [3]\nset pins, 0\n", 8)
 write_trace("sideset_test", ".sideset 1\nset x, 7 side 1 [1]\nnop side 0\n", 6,
             sideset_count=1, sideset_base=1)
 write_trace("jmp_test", "set x, 2\nloop: jmp x-- loop\nset y, 1\n", 8)
+# pin_width pins the model to the RTL pin-write widths: MOV PINS drives all 8
+# pins, SET PINS only the 5-pin immediate window, OUT PINS,1 only one pin.
+write_trace("pin_width", "pull block\nmov pins, osr\nset pins, 31\nout pins, 1\njmp 0\n", 8,
+            initial_tx=[0xFFFFFFFF])

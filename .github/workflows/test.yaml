@@ -38,8 +38,11 @@ jobs:
           cd test
           make clean SIM=verilator
           make SIM=verilator
-          # Check the JUnit report after the simulator run completes.
-          ! grep failure results.xml
+          # Check the JUnit report after the simulator run completes. Match
+          # only real <failure>/<error> elements: the root element always
+          # carries a failures="0" attribute, which plain 'grep failure'
+          # would match even on a fully passing run.
+          ! grep -qE "<(failure|error)" results.xml
 
       - name: Test Summary
         uses: test-summary/action@v2.4

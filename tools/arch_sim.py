@@ -315,10 +315,12 @@ class ProtocolEngine:
             return 0
         raise ValueError(f"reserved endpoint {endpoint}")
 
-    def _write_endpoint(self, endpoint: Endpoint, value: int) -> None:
+    def _write_endpoint(self, endpoint: Endpoint, value: int, pin_count: int = 8) -> None:
         value &= WORD_MASK
         if endpoint == Endpoint.PINS:
-            self.gpio_out = self._mapped_write(self.gpio_out, value, self.out_base)
+            self.gpio_out = self._mapped_write(
+                self.gpio_out, value, self.out_base, pin_count
+            )
         elif endpoint == Endpoint.X:
             self.x = value & 0xFFFF
         elif endpoint == Endpoint.Y:
@@ -426,7 +428,11 @@ class ProtocolEngine:
                 elif ins.major == Major.OUT:
                     endpoint = Endpoint(ins.field_a)
                     count = decode_shift_count(ins.field_b)
-                    self._write_endpoint(endpoint, self._shift_out(count))
+                    # OUT PINS,n drives only the n mapped pins (clamped to the
+                    # 8 physical pins), matching the RTL shift count and PIO
+                    # semantics; counts of 8 or more cover the whole port.
+                    pin_count = min(count, 8) if endpoint == Endpoint.PINS else 8
+                    self._write_endpoint(endpoint, self._shift_out(count), pin_count)
                     self._complete_timed_instruction(ins.timing)
                     if next_pc >= self.program_words:
                         self.pc = self.program_words - 1
@@ -502,9 +508,17 @@ class ProtocolEngine:
                     elif destination == SetDest.Y:
                         self.y = immediate
                     elif destination == SetDest.PINS:
-                        self.gpio_out = self._mapped_write(self.gpio_out, immediate, self.set_base)
+                        # SET writes exactly the five immediate pins, matching
+                        # the RTL's fixed count of 5 (the old model default of
+                        # 8 zero-extended past the immediate and diverged from
+                        # the RTL whenever pins set_base+5..7 were driven).
+                        self.gpio_out = self._mapped_write(
+                            self.gpio_out, immediate, self.set_base, 5
+                        )
                     elif destination == SetDest.PINDIRS:
-                        self.gpio_oe = self._mapped_write(self.gpio_oe, immediate, self.set_base)
+                        self.gpio_oe = self._mapped_write(
+                            self.gpio_oe, immediate, self.set_base, 5
+                        )
                     self._complete_timed_instruction(ins.timing)
                     if next_pc >= self.program_words:
                         self.pc = self.program_words - 1

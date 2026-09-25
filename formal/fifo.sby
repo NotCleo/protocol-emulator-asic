@@ -1,0 +1,21 @@
+[tasks]
+bmc
+prove
+
+[options]
+bmc: mode bmc
+bmc: depth 32
+prove: mode prove
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal -sv pe_fifo.sv
+bmc: read_verilog -formal -sv -DFORMAL_DATA_INTEGRITY pe_fifo_props.sv
+prove: read_verilog -formal -sv pe_fifo_props.sv
+prep -top pe_fifo_formal
+
+[files]
+../src/engine/pe_fifo.sv
+pe_fifo_props.sv

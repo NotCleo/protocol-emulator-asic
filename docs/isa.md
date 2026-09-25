@@ -32,3 +32,21 @@ protocol programs; values above 31 are rejected.
 `IN` with right shifting moves the newly sampled bits into the most significant
 part of ISR, while left shifting appends them in the least significant part.
 `OUT` with right shifting emits OSR's least significant bits first.
+
+## Pin-write widths
+
+Pin destinations write a bounded window starting at their configured base,
+matching PIO semantics; they never zero-extend across the rest of the port.
+This is normative for both the RTL and the Python model (`tools/arch_sim.py`):
+
+| Instruction | Pins written (from base) |
+|---|---|
+| `SET PINS` / `SET PINDIRS` | exactly 5 (the immediate width) |
+| `OUT PINS, n` | `min(n, 8)` (the shift count, clamped to the port) |
+| `MOV PINS, src` | 8 (the whole mapped port) |
+| side-set | `sideset_count` (0-2), applied after the instruction's own write |
+
+An earlier model revision zero-extended `SET PINS` and `OUT PINS,n` to 8
+pins, silently clearing neighboring pins the RTL left untouched. The
+`pin_width` golden trace case and `test_pin_write_widths_match_rtl` pin the
+corrected behavior so the divergence cannot reappear.

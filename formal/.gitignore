@@ -1,0 +1,3 @@
+# SBY creates one working directory per job/task run (fifo_bmc/, clkdiv/,
+# ...).  Only the .sby files and the property wrappers are versioned.
+*/

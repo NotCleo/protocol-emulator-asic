@@ -7,6 +7,7 @@ module tb_random_diff;
     integer trace_file, trace_tick, trace_limit, case_i, word_i;
     logic [15:0] trace_instruction; logic trace_delay;
     logic [1:0] trace_sideset; logic trace_wait; string trace_fifo_activity;
+    string trace_stall;
     always #5 clk=~clk;
     protocol_emulator_top dut(.clk_i(clk),.rst_ni(rst_n),.host_valid_i(host_valid),.host_write_i(host_write),
       .host_addr_i(host_addr),.host_wdata_i(host_wdata),.host_wstrb_i(host_wstrb),.host_rdata_o(host_rdata),
@@ -24,6 +25,10 @@ module tb_random_diff;
         trace_instruction=trace_delay ? 16'hffff : dut.instr;
         trace_sideset=dut.sideset_we ? dut.sideset_value[1:0] : 2'b0;
         trace_wait=(dut.stall_reason == 3'd2);
+        // Latch the stall string pre-edge: the model row reports the stall
+        // active during the tick, while the post-edge combinational value
+        // already reflects the next tick.
+        trace_stall=stall_name(dut.stall_reason);
         if (dut.tx_core_pop) trace_fifo_activity="pull";
         else if (dut.rx_core_push) trace_fifo_activity="push";
         else if (dut.stall_reason == 3'd3) trace_fifo_activity="pull_block";
@@ -33,7 +38,7 @@ module tb_random_diff;
           trace_tick,trace_tick,dut.imem_pc,trace_delay?"----":$sformatf("%04x",trace_instruction),
           dut.x,dut.y,dut.osr,dut.isr,dut.gpio_sampled,gpio_out,gpio_oe,dut.tx_level,dut.rx_level,
           trace_fifo_activity,trace_wait,dut.delay_count,trace_sideset,dut.running,dut.fault,
-          stall_name(dut.stall_reason));
+          trace_stall);
       end
     end
     initial begin

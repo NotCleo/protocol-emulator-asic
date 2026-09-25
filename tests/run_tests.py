@@ -54,6 +54,7 @@ def main() -> int:
     fifo = _load("test_fifo")
     arch = _load("test_arch_sim")
     uart = _load("test_uart")
+    spi = _load("test_spi")
     tests = [
         ("ISA", isa.test_major_classes_and_round_trips),
         ("ISA timing", isa.test_timing_layout),
@@ -66,8 +67,10 @@ def main() -> int:
         ("delay", arch.test_delay_executes_once_and_side_set_is_same_event),
         ("sideset", arch.test_delay_executes_once_and_side_set_is_same_event),
         ("shift", arch.test_pull_out_and_push_round_trip),
+        ("pin write widths", arch.test_pin_write_widths_match_rtl),
         ("gpio_toggle", arch.test_gpio_toggle_program_changes_output_and_direction),
         ("uart_tx", uart.test_preliminary_uart_tx_8n1_in_python_model),
+        ("spi_master", spi.test_spi_master_mode0_full_duplex_in_python_model),
     ]
     passed = 0
     failed = 0

@@ -16,7 +16,7 @@ from tests.compare_rtl_trace import compare
 
 SEED = 0x51A5EED
 CASES = 100
-WORDS = 8
+WORDS = 12
 CYCLES = 100
 OUT_DIR = ROOT / "tests" / "generated_random"
 INCLUDE = ROOT / "tests" / "random_programs.svh"
@@ -75,22 +75,33 @@ def word(r: random.Random, sideset_count: int) -> int:
 def make_case(seed: int):
     r = random.Random(seed)
     sideset_count = r.randrange(3)
+
+    def forced_timing() -> int:
+        # Random side-set/delay on the forced slots too, so every case also
+        # produces delay-stall rows in the differential traces.
+        return encode_timing(
+            side=r.randrange(1 << sideset_count) if sideset_count else 0,
+            delay=r.randrange(1 << (5 - sideset_count)),
+            sideset_count=sideset_count,
+        )
+
     sideset_base = r.randrange(8)
     set_base = r.randrange(8)
     in_base = r.randrange(8)
     out_base = r.randrange(8)
     shift_cfg = r.choice([0, 1, 2, 3])
     program = [word(r, sideset_count) for _ in range(WORDS)]
-    # Force every case to contain at least one instance of each datapath class
-    # while retaining random surrounding control flow.
-    program[0] = encode_set(SetDest.X, r.randrange(32), encode_timing(delay=0, sideset_count=sideset_count))
-    program[1] = encode_shift(Major.IN, Endpoint.PINS, 8, encode_timing(sideset_count=sideset_count))
-    program[2] = encode_shift(Major.OUT, Endpoint.PINS, 8, encode_timing(sideset_count=sideset_count))
-    program[3] = encode_push_pull(False, False, encode_timing(sideset_count=sideset_count))
-    program[4] = encode_push_pull(True, False, encode_timing(sideset_count=sideset_count))
-    program[5] = encode_wait(WaitCond.PIN_LOW, 0, encode_timing(sideset_count=sideset_count))
-    program[6] = encode_mov(Endpoint.Y, Endpoint.ISR, encode_timing(sideset_count=sideset_count))
-    program[7] = encode_jmp(JmpCond.ALWAYS, 0)
+    # Force every case to contain at least one instance of each datapath
+    # class while retaining random surrounding control flow (words 7..10)
+    # and a guaranteed loop-back at the last word.
+    program[0] = encode_set(SetDest.X, r.randrange(32), forced_timing())
+    program[1] = encode_shift(Major.IN, Endpoint.PINS, 8, forced_timing())
+    program[2] = encode_shift(Major.OUT, Endpoint.PINS, 8, forced_timing())
+    program[3] = encode_push_pull(False, False, forced_timing())
+    program[4] = encode_push_pull(True, False, forced_timing())
+    program[5] = encode_wait(WaitCond.PIN_LOW, 0, forced_timing())
+    program[6] = encode_mov(Endpoint.Y, Endpoint.ISR, forced_timing())
+    program[WORDS - 1] = encode_jmp(JmpCond.ALWAYS, 0)
     return program, (sideset_count, sideset_base, set_base, in_base, out_base, shift_cfg)
 
 

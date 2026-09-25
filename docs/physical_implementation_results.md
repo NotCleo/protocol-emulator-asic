@@ -2,7 +2,22 @@
 
 ## Status
 
-Local synthesis now passes; the official IHP hardening run is pending in CI.
+The official IHP hardening run **succeeded** in CI: `gds` workflow run
+36105975588 (commit `975a691`, `TinyTapeout/tt-gds-action@ttihp26b`,
+`ihp-sg13g2`, ~68 minutes) produced a complete GDS/OAS/LEF/SPEF/netlist set
+and passed the Tiny Tapeout precheck. Timing, DRC, and antenna checks are
+clean at all corners; metrics below are from that run's `tt_submission`
+artifact (`stats/metrics.csv`, `stats/synthesis-stats.txt`).
+
+The same run's `gl_test` job failed for CI-plumbing reasons (the gate-level
+job only installs Icarus Verilog while `test/Makefile` defaulted to
+Verilator, and the action's `! grep failure results.xml` check false-matches
+the `failures="0"` attribute cocotb 2.x writes); both are fixed in the
+Makefile and testbench, and the full gate-level cocotb suite now passes
+8/8 locally against the post-route netlist with Icarus 13. The `viewer` job
+failed because GitHub Pages is not enabled on the repository; it is now
+`continue-on-error` so it cannot turn the workflow red (enable Pages under
+Settings -> Pages -> Source: GitHub Actions to get the online GDS viewer).
 
 ### Synthesis blocker fixed (local Yosys)
 
@@ -55,28 +70,49 @@ register array; if the mapped IHP area is too large, the options are an SRAM
 macro or reducing IMEM depth. Generic-cell counts are not 1:1 with IHP
 standard cells, so the authoritative number is the LibreLane run.
 
-### IHP hardening (LibreLane)
+### IHP hardening (LibreLane, CI run 36105975588)
 
-No local IHP hardening result is available yet. The official Tiny Tapeout
-support tools were cloned to `/tmp/tt-support-tools`; local configuration
-could not complete earlier because of missing dependencies, and the Docker
-daemon socket remains inaccessible to the current user
-(`permission denied ... /var/run/docker.sock`).
+Synthesis mapped the design to **9,121 sg13g2 standard cells** (chip area
+167,193 um^2, 50.2% of it sequential) -- well below the generic-cell
+estimate above, confirming that generic counts are not 1:1 with mapped
+cells. The 64x16 IMEM was mapped as a flip-flop array (1,714
+`sg13g2_dfrbpq_1` DFFs total across the design); no SRAM macro was needed.
 
-The repository's official workflow remains enabled in
-`.github/workflows/gds.yaml` with `TinyTapeout/tt-gds-action@ttihp26b` and
-`ihp-sg13g2`. Previous CI runs failed on the synthesis error above, which is
-now fixed. No synthesis-to-GDS, timing, DRC, antenna, or 6x4-fit metrics are
-reported until that flow completes.
+Largest cell categories after synthesis:
+
+| Cell | Count |
+|---|---:|
+| sg13g2_dfrbpq_1 (DFF w/ reset) | 1,714 |
+| sg13g2_a22oi_1 | 1,349 |
+| sg13g2_mux2_1 | 1,265 |
+| sg13g2_nand2_1 | 883 |
+| sg13g2_o21ai_1 | 787 |
+| sg13g2_a21oi_1 | 510 |
+| sg13g2_nor2_1 | 495 |
+| other combinational | ~2,118 |
+
+Post-route (OpenROAD) results for the 6x4 tile allocation:
 
 | Metric | Result |
 |---|---|
-| Synthesis cells | 14,874 generic (Yosys 0.55, no PDK); IHP mapping pending CI |
-| Sequential cells | ~6,634 generic FF cells; IHP mapping pending CI |
-| Mapped area | Pending CI |
-| IMEM implementation | Inferred register array (64x16); macro swap if area requires |
-| Placement utilization | Pending CI |
-| Routing/congestion | Pending CI |
-| WNS/TNS | Pending CI |
-| Critical path/Fmax | Pending CI |
-| 6x4 fit | Not determined until CI hardening completes |
+| Synthesis cells | 9,121 sg13g2 cells (167,193 um^2, 50.2% sequential) |
+| Sequential cells | 1,714 DFF (`sg13g2_dfrbpq_1`) |
+| Post-P&R instances | 12,854 stdcell (incl. clock tree/fillers), 214,767 um^2 |
+| Die area / bbox | 916,214 um^2 (1289.28 x 710.64 um) |
+| Placement utilization | 23.8% -- comfortable 6x4 fit |
+| Setup WNS/TNS (nom_slow_1p08V_125C) | +3.345 ns / 0.0 (0 violations) |
+| Hold WNS/TNS (nom_slow_1p08V_125C) | +0.651 ns / 0.0 (0 violations) |
+| Setup WNS (nom_fast_1p32V_m40C) | +13.204 ns / TNS 0.0 |
+| Clock skew (worst setup, slow corner) | 0.292 ns |
+| Power (total) | 6.51 mW (5.47 internal + 1.00 switching + 0.04 leakage) |
+| Lint | 0 errors, 0 inferred latches, 38 warnings |
+| Max fanout / slew violations | 117 / 127 (slow corner; non-blocking, did not fail DRC or precheck) |
+| DRC / antenna / precheck | Clean (gds + precheck jobs green) |
+
+With the 50 MHz (20 ns) clock declared in `info.yaml`, worst-case setup
+slack of +3.345 ns at the slow corner implies a critical path of ~16.65 ns
+(Fmax ~60 MHz), so the engine meets its target clock with margin.
+
+The `gl_test` gate-level job of that run failed before simulating (missing
+Verilator in the Icarus-only job) -- see the Status section; the fixed flow
+was validated locally against the same post-route netlist.

@@ -53,14 +53,16 @@ while the engine drives the protocol waveforms on `uio[7:0]`.
    protocol waveform on `uio[7:0]` with a logic analyzer, or read RX_DATA
    (0x01C) and STATUS (0x004) over SPI.
 
-Example programs are provided in `src/rtl/`: `gpio_toggle.pasm` toggles a pin
-(the minimal smoke test), and `uart_tx.pasm` transmits 8N1 UART at the baud
-rate set by CLKDIV. They assemble with `tools/assembler.py`. Invalid SPI
-commands, writes to read-only registers, FIFO overflow/underflow, and IMEM
-writes while running all raise the management error response
-(read data 0xDEADBEEF) and, for running IMEM writes, the sticky FAULT bit, so
 error paths can be verified directly over SPI. Raising CS_N mid-transaction
-safely aborts and resets the packet state machine.
+safely aborts and resets the packet state machine. Invalid SPI commands,
+writes to read-only registers, FIFO overflow/underflow, and IMEM writes while
+running all raise the management error response (read data 0xDEADBEEF) and,
+for running IMEM writes, the sticky FAULT bit. Example programs are provided
+in `programs/`: `gpio_toggle.pasm` toggles a pin (the minimal smoke test),
+`uart_tx.pasm` transmits 8N1 UART at the baud rate set by CLKDIV, and
+`spi_master.pasm` is a full-duplex SPI mode 0 master (MSB-first, 32-bit
+frames) that drives SCK/CS_N through the two side-set bits. They
+assemble with `tools/assembler.py`.
 
 The repository also carries the full verification environment used during
 development: a dependency-free Python regression (`python3

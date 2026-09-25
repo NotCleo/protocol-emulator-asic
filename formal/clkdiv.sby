@@ -1,0 +1,18 @@
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+bmc: depth 64
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal -sv pe_clkdiv.sv
+read_verilog -formal -sv pe_clkdiv_props.sv
+prep -top pe_clkdiv_formal
+
+[files]
+../src/engine/pe_clkdiv.sv
+pe_clkdiv_props.sv

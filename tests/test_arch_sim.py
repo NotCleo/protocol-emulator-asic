@@ -83,3 +83,27 @@ def test_parameterized_pc_faults_at_last_instruction():
         assert row["pc"] == depth - 1
         assert row["fault"]
         assert not row["running"]
+
+
+def test_pin_write_widths_match_rtl():
+    """MOV PINS writes 8 pins, SET PINS writes 5, OUT PINS,n writes n.
+
+    The frozen RTL bounds SET PINS/PINDIRS to the five-bit immediate window
+    and OUT PINS,n to the shift count (clamped at the 8-pin port), while
+    MOV PINS drives the whole port.  The model used to zero-extend every
+    pin write to 8 pins, silently clearing neighboring pins -- a divergence
+    the random differential only missed by luck.
+    """
+    engine = ProtocolEngine()
+    engine.feed_tx([0xFFFFFFFF])
+    engine.load_program(Assembler().assemble(
+        "pull block\nmov pins, osr\nset pins, 31\nout pins, 1\njmp 0\n"
+    ))
+    engine.start()
+    engine.step()  # pull block: OSR <= 0xFFFFFFFF
+    engine.step()  # mov pins, osr: full 8-pin port write
+    assert engine.gpio_out == 0xFF
+    engine.step()  # set pins, 31: only pins 0-4; pins 5-7 must survive
+    assert engine.gpio_out == 0xFF
+    engine.step()  # out pins, 1: only pin 0; pins 1-7 must survive
+    assert engine.gpio_out == 0xFF
